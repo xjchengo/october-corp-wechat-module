@@ -1,0 +1,31 @@
+{
+    "name": "huying/october-corp-wechat-module",
+    "type": "october-module",
+    "description": "Wechat module for October CMS",
+    "homepage": "http://www.echo58.com",
+    "keywords": ["october cms", "october", "wechat", "corp"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Xujian Chen",
+            "email": "xjchen@echo58.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0",
+        "composer/installers": "~1.0",
+        "october/rain": "~1.0",
+        "guzzlehttp/guzzle": "~6.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Wechat\\": ""
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0-dev"
+        }
+    },
+    "minimum-stability": "dev"
+}

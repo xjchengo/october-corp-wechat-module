@@ -1,0 +1,9 @@
+# ===================================
+#  Field Definitions
+# ===================================
+
+fields:
+    corp_id:
+        label: CorpID
+    secret:
+        label: Secret
