@@ -52,6 +52,10 @@ interface WechatApiInterface
     const TAG_ADDUSER_URL 		= '/tag/addtagusers';
     const TAG_DELUSER_URL 		= '/tag/deltagusers';
     const TAG_LIST_URL 			= '/tag/list';
+    const BATCH_INVITE_URL      = '/batch/inviteuser';
+    const BATCH_SYNCUSER_URL    = '/batch/syncuser';
+    const BATCH_REPLACEUSER_URL    = '/batch/replaceuser';
+    const BATCH_REPLACEPARTY_URL    = '/batch/replaceparty';
     const MEDIA_UPLOAD_URL 		= '/media/upload';
     const MEDIA_GET_URL 		= '/media/get';
     const MATERIAL_UPLOAD_URL 		= '/material/add_material';
@@ -65,4 +69,17 @@ interface WechatApiInterface
     const CALLBACKSERVER_GET_URL = '/getcallbackip';
     const OAUTH_PREFIX 			= 'https://open.weixin.qq.com/connect/oauth2';
     const OAUTH_AUTHORIZE_URL 	= '/authorize';
+
+    const USER_STATUS_ALL = 0;
+    const USER_STATUS_SUBSCRIBED = 1;
+    const USER_STATUS_BANNED = 2;
+    const USER_STATUS_UNSUBSCRIBED = 4;
+
+    const INVITE_TYPE_WECHAT = 1;
+    const INVITE_TYPE_EMAIL = 2;
+
+    const MEDIA_TYPE_IMAGE = 'image';
+    const MEDIA_TYPE_VOCIE = 'voice';
+    const MEDIA_TYPE_VIDEO = 'video';
+    const MEDIA_TYPE_FILE = 'file';
 }

@@ -4,23 +4,36 @@ use Cache;
 use Http;
 use Illuminate\Support\Fluent;
 use InvalidArgumentException;
-use Wechat\Classes\ApiModules\Department;
+use Wechat\Classes\ApiModules\Contacts;
+use GuzzleHttp\ClientInterface as HttpClientInterface;
+use GuzzleHttp\Client as HttpClient;
+use Wechat\Classes\ApiModules\Media;
 
 class WechatApi implements WechatApiInterface
 {
-    use Department;
+    use Contacts,
+        Media;
 
     protected $corpId;
     protected $secret;
+    protected $httpClient;
+
     protected $accessToken;
 
     protected $errCode;
     protected $errMsg;
 
-    public function __construct($corpId, $secret)
+    public function __construct($corpId, $secret, HttpClientInterface $httpClient = null)
     {
         $this->corpId = $corpId;
         $this->secret = $secret;
+        if (!$httpClient) {
+            $httpClient = new HttpClient([
+                'base_uri' => static::API_URL_PREFIX,
+            ]);
+        }
+        $this->httpClient = $httpClient;
+
         if (!$this->getAccessToken()) {
             throw new InvalidArgumentException('企业号信息不正确，请到后台设置中确认账号信息。');
         }
@@ -36,12 +49,10 @@ class WechatApi implements WechatApiInterface
             return $this->accessToken = $cached;
         }
 
-        $result = $this->httpGet(static::TOKEN_GET_URL, function($http) {
-            $http->data([
-                'corpid' => $this->corpId,
-                'corpsecret' => $this->secret,
-            ]);
-        }, false);
+        $result = $this->httpGet(static::TOKEN_GET_URL, [
+            'corpid' => $this->corpId,
+            'corpsecret' => $this->secret,
+        ], [], false);
 
         if (!$this->processWechatApiResult(($result))) {
             return false;
@@ -71,24 +82,23 @@ class WechatApi implements WechatApiInterface
         return 'Wechat::' . $this->corpId . '.' .$keyName;
     }
 
-    public function httpGet($url, $query = [], $options = null, $appendAccessToken = true, $jsonDecode = true)
+    public function httpGet($url, $query = [], $options = [], $appendAccessToken = true, $jsonDecode = true)
     {
         $url = $this->processUrl($url, $appendAccessToken, $query);
 
-        $result = Http::get($url, $options);
+        $result = $this->httpClient->get($url, $options);
 
         return $this->processHttpResult($result, $jsonDecode);
     }
 
-    public function httpPost($url, $data = [], $options = null, $appendAccessToken = true, $jsonDecode = true)
+    public function httpPost($url, $data = [], $options = [], $appendAccessToken = true, $jsonDecode = true)
     {
         $url = $this->processUrl($url, $appendAccessToken);
-        $data = $this->filterData($data);
-
-        $result = Http::post($url, function($http) use($data, $options) {
-            $http->data($data);
-            if ($options && is_callable($options)) $options($http);
-        });
+        if ($data !== null) {
+            $data = $this->filterData($data);
+            $options['json'] = $data;
+        }
+        $result = $this->httpClient->post($url, $options);
 
         return $this->processHttpResult($result, $jsonDecode);
     }
@@ -103,6 +113,10 @@ class WechatApi implements WechatApiInterface
             $query['access_token'] = $this->getAccessToken();
         }
 
+        if (!$query) {
+            return $url;
+        }
+
         if (strstr($url, '?') !== false) {
             $url .= '&' . http_build_query($query);
         } else {
@@ -115,7 +129,7 @@ class WechatApi implements WechatApiInterface
     protected function processHttpResult($result, $jsonDecode = true)
     {
         if ($jsonDecode) {
-            $resultArray = json_decode((string)$result, true);
+            $resultArray = json_decode((string)$result->getBody(), true);
             return new Fluent($resultArray);
         }
 
@@ -137,7 +151,7 @@ class WechatApi implements WechatApiInterface
 
     protected function logError()
     {
-        $caller = debug_backtrace(false, 2)[1];
+        $caller = debug_backtrace(false, 3)[2];
         $errorDetails = [
             'corpId' => $this->corpId,
             'secret' => $this->secret,
