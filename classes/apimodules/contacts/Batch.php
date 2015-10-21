@@ -1,7 +1,7 @@
 <?php namespace Wechat\Classes\ApiModules\Contacts;
 
 use Illuminate\Support\Fluent;
-use October\Rain\Support\Collection;
+use Wechat\Classes\Collection;
 
 trait Batch
 {

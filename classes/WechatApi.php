@@ -3,7 +3,7 @@
 use Cache;
 use Http;
 use Illuminate\Support\Fluent;
-use InvalidArgumentException;
+use October\Rain\Exception\ApplicationException;
 use Wechat\Classes\ApiModules\Contacts;
 use GuzzleHttp\ClientInterface as HttpClientInterface;
 use GuzzleHttp\Client as HttpClient;
@@ -28,14 +28,12 @@ class WechatApi implements WechatApiInterface
         $this->corpId = $corpId;
         $this->secret = $secret;
         if (!$httpClient) {
-            $httpClient = new HttpClient([
-                'base_uri' => static::API_URL_PREFIX,
-            ]);
+            $httpClient = new HttpClient();
         }
         $this->httpClient = $httpClient;
 
         if (!$this->getAccessToken()) {
-            throw new InvalidArgumentException('企业号信息不正确，请到后台设置中确认账号信息。');
+            throw new ApplicationException('企业号信息不正确，请到后台设置中确认账号信息。');
         }
     }
 
@@ -61,6 +59,14 @@ class WechatApi implements WechatApiInterface
         $this->cache('access_token', $result->access_token, $result->expires_in);
 
         return $this->accessToken = $result->access_token;
+    }
+
+    public function clearCachedAccessToken()
+    {
+        $cacheKey = $this->getCacheKey('access_token');
+
+        Cache::forget($cacheKey);
+        $this->accessToken = null;
     }
 
     protected function getCached($keyName)
@@ -96,7 +102,7 @@ class WechatApi implements WechatApiInterface
         $url = $this->processUrl($url, $appendAccessToken);
         if ($data !== null) {
             $data = $this->filterData($data);
-            $options['json'] = $data;
+            $options['body'] = json_encode($data, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
         }
         $result = $this->httpClient->post($url, $options);
 
@@ -184,4 +190,18 @@ class WechatApi implements WechatApiInterface
         return $this->errMsg;
     }
 
+    public function getCorpId()
+    {
+        return $this->corpId;
+    }
+
+    public function getSecret()
+    {
+        return $this->secret;
+    }
+
+    public function getApiException()
+    {
+        return new ApplicationException('微信接口错误：'.$this->getErrMsg(), $this->getErrCode());
+    }
 }
